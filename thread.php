@@ -1,8 +1,19 @@
 <?php
 require_once 'includes/header.php';
+require_once 'includes/db.php';
+// Cek apakah user adalah admin untuk izin menghapus thread
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_thread']) && isAdmin()) {
+    $thread_id = (int)$_POST['thread_id'];
+
+    if (deleteThread($thread_id)) {
+        redirect('index.php', 'Thread berhasil dihapus.', 'success');
+    } else {
+        $error = "Gagal menghapus thread.";
+    }
+}
 
 // Cek ID thread
-if(!isset($_GET['id']) || empty($_GET['id'])) {
+if (!isset($_GET['id']) || empty($_GET['id'])) {
     redirect('index.php', 'Thread tidak ditemukan', 'danger');
 }
 
@@ -19,7 +30,7 @@ $stmt->bind_param("i", $thread_id);
 $stmt->execute();
 $result = $stmt->get_result();
 
-if($result->num_rows == 0) {
+if ($result->num_rows == 0) {
     redirect('index.php', 'Thread tidak ditemukan', 'danger');
 }
 
@@ -32,16 +43,16 @@ $stmt->bind_param("i", $thread_id);
 $stmt->execute();
 
 // Proses komentar baru
-if($_SERVER['REQUEST_METHOD'] == 'POST' && isLoggedIn()) {
-    if(isset($_POST['comment_content']) && !empty($_POST['comment_content'])) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isLoggedIn()) {
+    if (isset($_POST['comment_content']) && !empty($_POST['comment_content'])) {
         $content = clean($_POST['comment_content']);
         $user_id = $_SESSION['user_id'];
-        
+
         $query = "INSERT INTO comments (content, user_id, thread_id) VALUES (?, ?, ?)";
         $stmt = $conn->prepare($query);
         $stmt->bind_param("sii", $content, $user_id, $thread_id);
-        
-        if($stmt->execute()) {
+
+        if ($stmt->execute()) {
             redirect('thread.php?id=' . $thread_id, 'Komentar berhasil ditambahkan', 'success');
         } else {
             $error = "Gagal menambahkan komentar: " . $conn->error;
@@ -52,28 +63,28 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isLoggedIn()) {
 }
 
 // Proses vote
-if(isset($_POST['vote']) && isLoggedIn() && $thread['has_poll']) {
+if (isset($_POST['vote']) && isLoggedIn() && $thread['has_poll']) {
     $option_id = (int)$_POST['poll_option'];
     $user_id = $_SESSION['user_id'];
-    
+
     // Ambil poll_id
     $query = "SELECT id FROM polls WHERE thread_id = ?";
     $stmt = $conn->prepare($query);
     $stmt->bind_param("i", $thread_id);
     $stmt->execute();
     $poll_result = $stmt->get_result();
-    
-    if($poll_result->num_rows > 0) {
+
+    if ($poll_result->num_rows > 0) {
         $poll = $poll_result->fetch_assoc();
         $poll_id = $poll['id'];
-        
+
         // Cek apakah user sudah vote
-        if(!hasUserVoted($poll_id, $user_id)) {
+        if (!hasUserVoted($poll_id, $user_id)) {
             $query = "INSERT INTO votes (poll_id, option_id, user_id) VALUES (?, ?, ?)";
             $stmt = $conn->prepare($query);
             $stmt->bind_param("iii", $poll_id, $option_id, $user_id);
-            
-            if($stmt->execute()) {
+
+            if ($stmt->execute()) {
                 redirect('thread.php?id=' . $thread_id, 'Vote berhasil', 'success');
             } else {
                 $error = "Gagal memproses vote: " . $conn->error;
@@ -88,24 +99,24 @@ if(isset($_POST['vote']) && isLoggedIn() && $thread['has_poll']) {
 $poll = null;
 $poll_options = [];
 
-if($thread['has_poll']) {
+if ($thread['has_poll']) {
     $query = "SELECT * FROM polls WHERE thread_id = ?";
     $stmt = $conn->prepare($query);
     $stmt->bind_param("i", $thread_id);
     $stmt->execute();
     $poll_result = $stmt->get_result();
-    
-    if($poll_result->num_rows > 0) {
+
+    if ($poll_result->num_rows > 0) {
         $poll = $poll_result->fetch_assoc();
-        
+
         // Ambil opsi polling
         $query = "SELECT * FROM poll_options WHERE poll_id = ?";
         $stmt = $conn->prepare($query);
         $stmt->bind_param("i", $poll['id']);
         $stmt->execute();
         $poll_options_result = $stmt->get_result();
-        
-        while($option = $poll_options_result->fetch_assoc()) {
+
+        while ($option = $poll_options_result->fetch_assoc()) {
             $poll_options[] = $option;
         }
     }
@@ -133,43 +144,42 @@ $comments_result = $stmt->get_result();
             <span><i class="fas fa-eye"></i> <?php echo $thread['views']; ?> views</span>
         </div>
     </div>
-    
     <div class="thread-content">
         <?php echo nl2br($thread['content']); ?>
     </div>
-    
-    <?php if($poll): ?>
+
+    <?php if ($poll): ?>
         <div class="poll-section">
             <h3><?php echo $poll['question']; ?></h3>
-            
+
             <?php
             $user_voted = false;
-            if(isLoggedIn()) {
+            if (isLoggedIn()) {
                 $user_voted = hasUserVoted($poll['id'], $_SESSION['user_id']);
             }
             ?>
-            
-            <?php if($user_voted || !isLoggedIn()): ?>
+
+            <?php if ($user_voted || !isLoggedIn()): ?>
                 <!-- Tampilkan hasil polling -->
                 <div class="poll-results">
                     <?php
                     $poll_results = getPollResults($poll['id']);
                     $total_votes = 0;
                     $results_data = [];
-                    
-                    while($result = $poll_results->fetch_assoc()) {
+
+                    while ($result = $poll_results->fetch_assoc()) {
                         $results_data[] = $result;
                         $total_votes += $result['vote_count'];
                     }
                     ?>
-                    
-                    <?php foreach($results_data as $result): ?>
-                        <?php 
+
+                    <?php foreach ($results_data as $result): ?>
+                        <?php
                         $percentage = $total_votes > 0 ? round(($result['vote_count'] / $total_votes) * 100) : 0;
                         ?>
                         <div class="poll-result-item">
                             <div class="poll-option-text">
-                                <?php echo $result['option_text']; ?> 
+                                <?php echo $result['option_text']; ?>
                                 <span class="vote-count">(<?php echo $result['vote_count']; ?> votes)</span>
                             </div>
                             <div class="progress">
@@ -179,12 +189,12 @@ $comments_result = $stmt->get_result();
                             </div>
                         </div>
                     <?php endforeach; ?>
-                    
+
                     <div class="total-votes">
                         Total votes: <?php echo $total_votes; ?>
                     </div>
-                    
-                    <?php if(!isLoggedIn()): ?>
+
+                    <?php if (!isLoggedIn()): ?>
                         <div class="poll-login-message">
                             <p>Login untuk berpartisipasi dalam polling.</p>
                         </div>
@@ -193,31 +203,31 @@ $comments_result = $stmt->get_result();
             <?php else: ?>
                 <!-- Tampilkan form polling -->
                 <form action="thread.php?id=<?php echo $thread_id; ?>" method="POST" class="poll-form">
-                    <?php foreach($poll_options as $option): ?>
+                    <?php foreach ($poll_options as $option): ?>
                         <div class="poll-option">
                             <input type="radio" id="option<?php echo $option['id']; ?>" name="poll_option" value="<?php echo $option['id']; ?>" required>
                             <label for="option<?php echo $option['id']; ?>"><?php echo $option['option_text']; ?></label>
                         </div>
                     <?php endforeach; ?>
-                    
+
                     <button type="submit" name="vote" class="btn btn-primary">Vote</button>
                 </form>
             <?php endif; ?>
         </div>
     <?php endif; ?>
-    
+
     <div class="comments-section">
         <h2>Komentar (<?php echo $comments_result->num_rows; ?>)</h2>
-        
-        <?php if(isset($error)): ?>
+
+        <?php if (isset($error)): ?>
             <div class="alert alert-danger">
                 <?php echo $error; ?>
             </div>
         <?php endif; ?>
-        
-        <?php if($comments_result->num_rows > 0): ?>
+
+        <?php if ($comments_result->num_rows > 0): ?>
             <div class="comments-list">
-                <?php while($comment = $comments_result->fetch_assoc()): ?>
+                <?php while ($comment = $comments_result->fetch_assoc()): ?>
                     <div class="comment-item">
                         <div class="comment-author">
                             <span class="username"><?php echo $comment['username']; ?></span>
@@ -232,8 +242,8 @@ $comments_result = $stmt->get_result();
         <?php else: ?>
             <p>Belum ada komentar. Jadilah yang pertama berkomentar!</p>
         <?php endif; ?>
-        
-        <?php if(isLoggedIn()): ?>
+
+        <?php if (isLoggedIn()): ?>
             <div class="comment-form">
                 <h3>Tambahkan Komentar</h3>
                 <form action="thread.php?id=<?php echo $thread_id; ?>" method="POST">
@@ -249,6 +259,47 @@ $comments_result = $stmt->get_result();
             </div>
         <?php endif; ?>
     </div>
+    <!-- Tombol Hapus Thread -->
+    <?php if (isAdmin()): ?>
+        <form action="thread.php?id=<?php echo $thread_id; ?>" method="POST" onsubmit="return confirm('Yakin ingin menghapus thread ini? Semua data terkait akan dihapus.')">
+            <input type="hidden" name="delete_thread" value="1">
+            <input type="hidden" name="thread_id" value="<?php echo $thread_id; ?>">
+            <button type="submit" class="delete-thread-btn">
+                <i class="fas fa-trash-alt"></i> Hapus Thread
+            </button>
+        </form>
+    <?php endif; ?>
 </div>
 
 <?php require_once 'includes/footer.php'; ?>
+
+<!-- Tambahkan style langsung di thread.php -->
+<style>
+    .delete-thread-btn {
+        position: absolute;
+        top: 50px;
+        right: 20px;
+        background-color: #dc3545;
+        color: white;
+        padding: 7px 7px;
+        border: none;
+        border-radius: 5px;
+        font-size: 14px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .delete-thread-btn:hover {
+        background-color: #c82333;
+    }
+
+    .delete-thread-btn i {
+        margin-right: 5px;
+    }
+
+    .thread-container {
+        position: relative;
+    }
+</style>

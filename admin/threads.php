@@ -4,20 +4,20 @@ $parent_dir = dirname(__DIR__);
 require_once $parent_dir . '/includes/header.php';
 
 // Redirect jika bukan admin
-if(!isAdmin()) {
+if (!isAdmin()) {
     redirect('../index.php', 'Anda tidak memiliki akses ke halaman ini', 'danger');
 }
 
 // Pin/unpin thread
-if(isset($_GET['pin'])) {
+if (isset($_GET['pin'])) {
     $thread_id = (int)$_GET['pin'];
     $is_pinned = (int)$_GET['status'] === 1 ? 0 : 1;
-    
+
     $query = "UPDATE threads SET is_pinned = ? WHERE id = ?";
     $stmt = $conn->prepare($query);
     $stmt->bind_param("ii", $is_pinned, $thread_id);
-    
-    if($stmt->execute()) {
+
+    if ($stmt->execute()) {
         $message = $is_pinned ? "Thread berhasil dipin ke atas." : "Thread berhasil di-unpin.";
         $message_type = "success";
     } else {
@@ -26,62 +26,15 @@ if(isset($_GET['pin'])) {
     }
 }
 
+
 // Hapus thread
-if(isset($_GET['delete'])) {
+if (isset($_GET['delete'])) {
     $thread_id = (int)$_GET['delete'];
-    
-    // Hapus thread dan data terkait
-    $conn->begin_transaction();
-    
-    try {
-        // Hapus polling terkait thread
-        $query = "SELECT id FROM polls WHERE thread_id = ?";
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param("i", $thread_id);
-        $stmt->execute();
-        $polls_result = $stmt->get_result();
-        
-        while($poll = $polls_result->fetch_assoc()) {
-            $poll_id = $poll['id'];
-            
-            // Hapus vote pada poll
-            $query = "DELETE FROM votes WHERE poll_id = ?";
-            $stmt = $conn->prepare($query);
-            $stmt->bind_param("i", $poll_id);
-            $stmt->execute();
-            
-            // Hapus opsi polling
-            $query = "DELETE FROM poll_options WHERE poll_id = ?";
-            $stmt = $conn->prepare($query);
-            $stmt->bind_param("i", $poll_id);
-            $stmt->execute();
-        }
-        
-        // Hapus semua poll untuk thread
-        $query = "DELETE FROM polls WHERE thread_id = ?";
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param("i", $thread_id);
-        $stmt->execute();
-        
-        // Hapus komentar pada thread
-        $query = "DELETE FROM comments WHERE thread_id = ?";
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param("i", $thread_id);
-        $stmt->execute();
-        
-        // Akhirnya, hapus thread
-        $query = "DELETE FROM threads WHERE id = ?";
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param("i", $thread_id);
-        $stmt->execute();
-        
-        $conn->commit();
-        
+    if (deleteThread($thread_id)) {
         $message = "Thread berhasil dihapus beserta semua datanya.";
         $message_type = "success";
-    } catch (Exception $e) {
-        $conn->rollback();
-        $message = "Gagal menghapus thread: " . $e->getMessage();
+    } else {
+        $message = "Gagal menghapus thread.";
         $message_type = "danger";
     }
 }
@@ -93,7 +46,7 @@ $category_filter = isset($_GET['category']) ? (int)$_GET['category'] : 0;
 $query = "SELECT * FROM categories ORDER BY name";
 $categories_result = $conn->query($query);
 $categories = [];
-while($category = $categories_result->fetch_assoc()) {
+while ($category = $categories_result->fetch_assoc()) {
     $categories[] = $category;
 }
 
@@ -105,7 +58,7 @@ $params = [];
 $types = '';
 $where_clause = '';
 
-if(!empty($search)) {
+if (!empty($search)) {
     $search_term = "%$search%";
     $where_clause .= "WHERE t.title LIKE ? OR t.content LIKE ?";
     $params[] = $search_term;
@@ -113,8 +66,8 @@ if(!empty($search)) {
     $types .= 'ss';
 }
 
-if($category_filter > 0) {
-    if(empty($where_clause)) {
+if ($category_filter > 0) {
+    if (empty($where_clause)) {
         $where_clause .= "WHERE t.category_id = ?";
     } else {
         $where_clause .= " AND t.category_id = ?";
@@ -131,7 +84,7 @@ $query = "SELECT t.*, u.username, c.name as category_name,
          $where_clause
          ORDER BY t.is_pinned DESC, t.created_at DESC";
 
-if(!empty($params)) {
+if (!empty($params)) {
     $stmt = $conn->prepare($query);
     $stmt->bind_param($types, ...$params);
     $stmt->execute();
@@ -145,47 +98,47 @@ if(!empty($params)) {
     <div class="admin-header">
         <h1>Manajemen Thread</h1>
     </div>
-    
+
     <div class="admin-menu">
         <a href="index.php" class="admin-menu-item">Dashboard</a>
         <a href="users.php" class="admin-menu-item">Users</a>
         <a href="categories.php" class="admin-menu-item">Kategori</a>
         <a href="threads.php" class="admin-menu-item active">Thread</a>
     </div>
-    
-    <?php if(isset($message)): ?>
+
+    <?php if (isset($message)): ?>
         <div class="alert alert-<?php echo $message_type; ?>">
             <?php echo $message; ?>
         </div>
     <?php endif; ?>
-    
+
     <div class="admin-content">
         <div class="filter-section">
             <form action="threads.php" method="GET" class="filter-form">
                 <div class="form-group">
                     <input type="text" name="search" placeholder="Cari judul atau konten..." value="<?php echo $search; ?>">
-                    
+
                     <select name="category">
                         <option value="0">Semua Kategori</option>
-                        <?php foreach($categories as $category): ?>
+                        <?php foreach ($categories as $category): ?>
                             <option value="<?php echo $category['id']; ?>" <?php echo $category_filter == $category['id'] ? 'selected' : ''; ?>>
                                 <?php echo $category['name']; ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
-                    
+
                     <button type="submit" class="btn">Filter</button>
-                    
-                    <?php if(!empty($search) || $category_filter > 0): ?>
+
+                    <?php if (!empty($search) || $category_filter > 0): ?>
                         <a href="threads.php" class="btn">Reset</a>
                     <?php endif; ?>
                 </div>
             </form>
         </div>
-        
+
         <h2>Daftar Thread</h2>
-        
-        <?php if($result->num_rows > 0): ?>
+
+        <?php if ($result->num_rows > 0): ?>
             <table class="table">
                 <thead>
                     <tr>
@@ -201,14 +154,14 @@ if(!empty($params)) {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php while($thread = $result->fetch_assoc()): ?>
+                    <?php while ($thread = $result->fetch_assoc()): ?>
                         <tr>
                             <td><?php echo $thread['id']; ?></td>
                             <td>
                                 <a href="../thread.php?id=<?php echo $thread['id']; ?>" target="_blank">
                                     <?php echo $thread['title']; ?>
                                 </a>
-                                <?php if($thread['has_poll']): ?>
+                                <?php if ($thread['has_poll']): ?>
                                     <span class="poll-badge">Poll</span>
                                 <?php endif; ?>
                             </td>
@@ -218,7 +171,7 @@ if(!empty($params)) {
                             <td><?php echo $thread['views']; ?></td>
                             <td><?php echo $thread['comment_count']; ?></td>
                             <td>
-                                <?php if($thread['is_pinned']): ?>
+                                <?php if ($thread['is_pinned']): ?>
                                     <a href="threads.php?pin=<?php echo $thread['id']; ?>&status=1" class="status-badge pinned" title="Klik untuk un-pin">Pinned</a>
                                 <?php else: ?>
                                     <a href="threads.php?pin=<?php echo $thread['id']; ?>&status=0" class="status-badge unpinned" title="Klik untuk pin">Unpin</a>
@@ -232,7 +185,7 @@ if(!empty($params)) {
                 </tbody>
             </table>
         <?php else: ?>
-            <?php if(!empty($search) || $category_filter > 0): ?>
+            <?php if (!empty($search) || $category_filter > 0): ?>
                 <p>Tidak ada thread yang ditemukan dengan filter yang dipilih.</p>
             <?php else: ?>
                 <p>Belum ada thread yang dibuat.</p>
@@ -242,46 +195,47 @@ if(!empty($params)) {
 </div>
 
 <style>
-.filter-section {
-    margin-bottom: 1.5rem;
-}
+    .filter-section {
+        margin-bottom: 1.5rem;
+    }
 
-.filter-form .form-group {
-    display: flex;
-    gap: 0.5rem;
-}
+    .filter-form .form-group {
+        display: flex;
+        gap: 0.5rem;
+    }
 
-.filter-form input, .filter-form select {
-    flex: 1;
-}
+    .filter-form input,
+    .filter-form select {
+        flex: 1;
+    }
 
-.poll-badge {
-    display: inline-block;
-    background-color: #28a745;
-    color: white;
-    font-size: 0.75rem;
-    padding: 0.1rem 0.4rem;
-    border-radius: 4px;
-    margin-left: 0.5rem;
-}
+    .poll-badge {
+        display: inline-block;
+        background-color: #28a745;
+        color: white;
+        font-size: 0.75rem;
+        padding: 0.1rem 0.4rem;
+        border-radius: 4px;
+        margin-left: 0.5rem;
+    }
 
-.status-badge {
-    display: inline-block;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.875rem;
-    font-weight: 500;
-}
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
 
-.status-badge.pinned {
-    background-color: #dc3545;
-    color: white;
-}
+    .status-badge.pinned {
+        background-color: #dc3545;
+        color: white;
+    }
 
-.status-badge.unpinned {
-    background-color: #6c757d;
-    color: white;
-}
+    .status-badge.unpinned {
+        background-color: #6c757d;
+        color: white;
+    }
 </style>
 
 <?php require_once $parent_dir . '/includes/footer.php'; ?>
