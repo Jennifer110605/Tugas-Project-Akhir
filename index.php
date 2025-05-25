@@ -10,6 +10,13 @@ $result = $conn->query($query);
     <h1>Selamat Datang di Forum Mobile Legends</h1>
     <p>Diskusikan semua tentang Mobile Legends: Bang Bang - hero, strategi, meta, dan turnamen!</p>
 
+    <div class="hero-details-link">
+        <a href="hero-detail.php" class="btn btn-primary">
+            <i class="fas fa-crown"></i> Lihat Informasi Hero
+        </a>
+    </div>
+
+
     <div class="categories-section">
         <h2>Kategori</h2>
 

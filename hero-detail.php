@@ -32,9 +32,11 @@ $response = file_get_contents($url, false, $context);
 
     <!-- Main Content -->
     <main>
-        <header>
-
-        </header>
+        <div class="back-to-forum">
+            <a href="index.php" class="back-link">
+                <i class="fas fa-arrow-left"></i> Kembali ke Forum
+            </a>
+        </div>
         <?php
         if ($response === false) {
             echo '<div class="error-message">Error fetching hero data</div>';
