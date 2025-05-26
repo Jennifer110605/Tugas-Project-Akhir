@@ -7,7 +7,7 @@ $result = $conn->query($query);
 ?>
 
 <div class="forum-container">
-    <h1>Selamat Datang di Forum Mobile Legends</h1>
+    <h1>Selamat Datang di <b style="color:crimson;">Opini Masyarakat Land of Dawn</b></h1>
     <p>Diskusikan semua tentang Mobile Legends: Bang Bang - hero, strategi, meta, dan turnamen!</p>
 
     <div class="hero-details-link">
