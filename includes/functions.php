@@ -6,10 +6,19 @@ function isLoggedIn()
     return isset($_SESSION['user_id']);
 }
 
+// Cek user superadmin
+function isSuperAdmin()
+{
+    if (isset($_SESSION['user_role']) && $_SESSION['user_role'] == 'superadmin') {
+        return true;
+    } else {
+        return false;
+    }
+}
 // Cek user admin
 function isAdmin()
 {
-    if (isset($_SESSION['user_role']) && $_SESSION['user_role'] == 'admin') {
+    if (isset($_SESSION['user_role']) && $_SESSION['user_role'] == 'admin' || $_SESSION['user_role'] == 'superadmin') {
         return true;
     }
     return false;

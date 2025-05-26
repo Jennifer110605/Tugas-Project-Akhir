@@ -7,5 +7,4 @@ session_unset();
 session_destroy();
 
 // Redirect ke halaman login
-redirect('index.php', 'Anda telah berhasil logout', 'info');
-?>
+redirect('login.php', 'Anda telah berhasil logout', 'info');
