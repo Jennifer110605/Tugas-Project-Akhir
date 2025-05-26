@@ -12,7 +12,10 @@ $result = $conn->query($query);
 
     <div class="hero-details-link">
         <a href="hero-detail.php" class="btn btn-primary">
-            <i class="fas fa-crown"></i> Lihat Informasi Hero
+            <i class="fas fa-info"></i> Lihat Informasi Hero
+        </a>
+        <a href="hero-rank.php" class="btn btn-primary">
+            <i class="fas fa-square-poll-vertical"></i> Lihat Peringkat Hero
         </a>
     </div>
 

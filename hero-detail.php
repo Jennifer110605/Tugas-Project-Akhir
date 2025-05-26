@@ -1,6 +1,6 @@
 <?php
 $hero_id = isset($_GET['id']) ? (int)$_GET['id'] : 1;
-$lang = "id"; // For Indonesian language
+$lang = "id";
 
 $url = "https://mlbb-stats.ridwaanhall.com/api/hero-detail/$hero_id/?lang=$lang";
 $options = [
@@ -35,6 +35,9 @@ $response = file_get_contents($url, false, $context);
         <div class="back-to-forum">
             <a href="index.php" class="back-link">
                 <i class="fas fa-arrow-left"></i> Kembali ke Forum
+            </a>
+            <a href="hero-rank.php" class="back-link" style="margin-left: 0.5rem;">
+                <i class="fas fa-square-poll-vertical"></i> Peringkat Hero
             </a>
         </div>
         <?php
