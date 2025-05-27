@@ -18,7 +18,7 @@ function isSuperAdmin()
 // Cek user admin
 function isAdmin()
 {
-    if (isset($_SESSION['user_role']) && $_SESSION['user_role'] == 'admin' || $_SESSION['user_role'] == 'superadmin') {
+    if (isset($_SESSION['user_role']) && ($_SESSION['user_role'] == 'admin' || $_SESSION['user_role'] == 'superadmin')) {
         return true;
     }
     return false;
