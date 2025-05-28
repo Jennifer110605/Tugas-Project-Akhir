@@ -17,6 +17,9 @@ $result = $conn->query($query);
         <a href="hero-rank.php" class="btn btn-primary">
             <i class="fas fa-square-poll-vertical"></i> Lihat Peringkat Hero
         </a>
+        <a href="developer.php" class="btn btn-primary">
+            <i class="fas fa-shield"></i> Lihat Informasi Developer
+        </a>
     </div>
 
 
