@@ -15,34 +15,52 @@ require_once 'includes/header.php';
                     <!-- Developer 1 -->
                     <div class="developer-profile">
                         <h3>Developer 1</h3>
+                        <div>
+                            <img src="img/raffi.jpg" alt="Raffi" class="developer-image">
+                        </div>
                         <div class="info-item">
                             <strong>Nama:</strong> Raffi Ali Noer Golonda
                         </div>
                         <div class="info-item">
                             <strong>NIM:</strong> 230211060051
                         </div>
+                        <a href="https://www.instagram.com/raffi_golonda/" class="social-link" target="_blank" rel="noopener noreferrer">
+                            <img src="img/logo_ig.png" alt="">
+                        </a>
                     </div>
 
                     <!-- Developer 2 -->
                     <div class="developer-profile">
                         <h3>Developer 2</h3>
+                        <div>
+                            <img src="img/jennifer.jpg" alt="Jennifer" class="developer-image">
+                        </div>
                         <div class="info-item">
                             <strong>Nama:</strong> Jennifer Gloria Manoppo
                         </div>
                         <div class="info-item">
                             <strong>NIM:</strong> 230211060081
                         </div>
+                        <a href="https://www.instagram.com/jennajahya_/" class="social-link" target="_blank" rel="noopener noreferrer">
+                            <img src="img/logo_ig.png" alt="">
+                        </a>
                     </div>
 
                     <!-- Developer 3 -->
                     <div class="developer-profile">
                         <h3>Developer 3</h3>
+                        <div>
+                            <img src="img/natanael.jpg" alt="Natanael" class="developer-image">
+                        </div>
                         <div class="info-item">
                             <strong>Nama:</strong> Natanael Parulian Sitompul
                         </div>
                         <div class="info-item">
                             <strong>NIM:</strong> 230211060087
                         </div>
+                        <a href="https://www.instagram.com/neanteaa/" class="social-link" target="_blank" rel="noopener noreferrer">
+                            <img src="img/logo_ig.png" alt="">
+                        </a>
                     </div>
                 </div>
 
@@ -113,6 +131,20 @@ require_once 'includes/header.php';
     .developer-profile:hover {
         transform: translateY(-5px);
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .developer-image {
+        width: 200px;
+        height: auto;
+        border-radius: calc(infinity * 1px);
+        margin-bottom: 1rem;
+        justify-content: center;
+    }
+
+    .social-link img {
+        width: 40px;
+        height: auto;
+        margin-top: 1rem;
     }
 
     .developer-profile h3 {
